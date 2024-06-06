@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shape Game</title>
+  <style>
+    .shape {
+      position: absolute;
+      left: -40px;
+      animation: moveShape 5s linear infinite;
+      width: 40px;
+      height: 60%;
+    }
+
+    .rectangle {
+      background-color: red;
+      top: 50px;
+    }
+
+    .oval {
+      background-color: blue;
+      top: 150px;
+      animation-delay: 1s;
+      border-radius: 20px;
+    }
+
+    .parallelogram {
+      background-color: green;
+      top: 250px;
+      animation-delay: 2s;
+      transform: skew(-20deg);
+    }
+
+    @keyframes moveShape {
+      0% {
+        left: -40px;
+      }
+      100% {
+        left: calc(100% + 40px);
+      }
+    }
+
+    #player {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background-color: yellow;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .ball {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    #tryAgain {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 20px;
+      font-size: 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .counter {
+      position: absolute;
+      top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    #huntedCount {
+      left: 10px;
+    }
+
+    #touchedCount {
+      right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="shape rectangle"></div>
+  <div class="shape oval"></div>
+  <div class="shape parallelogram"></div>
+  <div id="player"></div>
+  <button id="tryAgain">Try Again</button>
+  <div id="huntedCount" class="counter">Hunted: 0</div>
+  <div id="touchedCount" class="counter">Touched: 0</div>
+
+  <script>
+    const player = document.getElementById('player');
+    const shapes = document.getElementsByClassName('shape');
+    const tryAgainButton = document.getElementById('tryAgain');
+    const huntedCountElement = document.getElementById('huntedCount');
+    const touchedCountElement = document.getElementById('touchedCount');
+    let gameRunning = true;
+    let huntedCount = 0;
+    let touchedCount = 0;
+
+    document.addEventListener('mousemove', movePlayer);
+
+    function movePlayer(event) {
+      if (!gameRunning) return;
+
+      const x = event.clientX;
+      const y = event.clientY;
+      player.style.left = x - 30 + 'px';
+      player.style.top = y - 30 + 'px';
+
+      checkCollision();
+    }
+
+    function checkCollision() {
+      const playerRect = player.getBoundingClientRect();
+
+      for (let i = 0; i < shapes.length; i++) {
+        const shapeRect = shapes[i].getBoundingClientRect();
+
+        if (
+          playerRect.left < shapeRect.right &&
+          playerRect.right > shapeRect.left &&
+          playerRect.top < shapeRect.bottom &&
+          playerRect.bottom > shapeRect.top
+        ) {
+          player.style.display = 'none';
+          touchedCount++;
+          touchedCountElement.textContent = 'Touched: ' + touchedCount;
+          endGame();
+          break;
+        }
+      }
+
+      const balls = document.getElementsByClassName('ball');
+      for (let i = 0; i < balls.length; i++) {
+        const ballRect = balls[i].getBoundingClientRect();
+
+        if (
+          playerRect.left < ballRect.right &&
+          playerRect.right > ballRect.left &&
+          playerRect.top < ballRect.bottom &&
+          playerRect.bottom > ballRect.top
+        ) {
+          balls[i].remove();
+          huntedCount++;
+          huntedCountElement.textContent = 'Hunted: ' + huntedCount;
+          break;
+        }
+      }
+
+      if (balls.length <= 2) {
+        createBalls(3);
+      }
+
+      if (
+        playerRect.left < 0 ||
+        playerRect.right > window.innerWidth ||
+        playerRect.top < 0 ||
+        playerRect.bottom > window.innerHeight
+      ) {
+        touchedCount++;
+        touchedCountElement.textContent = 'Touched: ' + touchedCount;
+        endGame();
+      }
+    }
+
+    function endGame() {
+      gameRunning = false;
+      document.removeEventListener('mousemove', movePlayer);
+      tryAgainButton.style.display = 'block';
+    }
+
+    tryAgainButton.addEventListener('click', () => {
+      location.reload();
+    });
+
+    function createBall(color) {
+      const ball = document.createElement('div');
+      ball.classList.add('ball');
+      ball.style.backgroundColor = color;
+      ball.style.left = Math.random() * (window.innerWidth - 40) + 'px';
+      ball.style.top = Math.random() * (window.innerHeight - 40) + 'px';
+      ball.speedX = Math.random() * 4 - 2;
+      ball.speedY = Math.random() * 4 - 2;
+      document.body.appendChild(ball);
+      moveBall(ball);
+    }
+
+    function createBalls(count) {
+      const colors = ['red', 'orange', 'purple', 'pink'];
+      for (let i = 0; i < count; i++) {
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        createBall(randomColor);
+      }
+    }
+
+    function moveBall(ball) {
+      if (!gameRunning) return;
+
+      const ballRect = ball.getBoundingClientRect();
+
+      if (ballRect.left <= 0 || ballRect.right >= window.innerWidth) {
+        ball.speedX = -ball.speedX;
+      }
+
+      if (ballRect.top <= 0 || ballRect.bottom >= window.innerHeight) {
+        ball.speedY = -ball.speedY;
+      }
+
+      ball.style.left = ballRect.left + ball.speedX + 'px';
+      ball.style.top = ballRect.top + ball.speedY + 'px';
+
+      requestAnimationFrame(() => moveBall(ball));
+    }
+
+    // Create initial balls
+    createBalls(5);
+  </script>
+</body>
+</html>
